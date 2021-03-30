@@ -69,7 +69,7 @@ def pull_API():
 #just going to have the loop end when it finds something. Not sure how to keep it from spamming my phone if the API goes wild overnight or something
 x = 0
 old_available_appointments = pull_API()
-while x==0:
+while True:
     dt = datetime.now()
     curr_seconds = dt.second
     if (curr_seconds % 60 == 0):
@@ -79,7 +79,7 @@ while x==0:
                 to=my_number, 
                 from_=twilio_number,
                 body= "Get that appointment! https://www.vaccinespotter.org/MN/?zip=55413&radius=25")
-            x = 1
+            time.sleep(600)
         else:
             old_available_appointments = available_appointments
         time.sleep(1)
