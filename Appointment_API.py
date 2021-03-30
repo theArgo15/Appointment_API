@@ -80,6 +80,5 @@ while True:
                 from_=twilio_number,
                 body= "Get that appointment! https://www.vaccinespotter.org/MN/?zip=55413&radius=25")
             time.sleep(600)
-        else:
             old_available_appointments = available_appointments
         time.sleep(1)
