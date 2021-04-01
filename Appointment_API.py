@@ -34,6 +34,8 @@ def coordinate_swap(backwards_coordinates):
 
 #download and parse data from API
 def pull_API():
+    # current_time = datetime.now().isoformat()[10:19]
+    # print(f'Pulling API {current_time}')
     req=requests.get('https://www.vaccinespotter.org/api/v0/states/MN.json')
     json_data = req.json()['features']
     cleaned_data = []
@@ -64,7 +66,10 @@ def pull_API():
     available_appointments = {} 
     for site in cleaned_data:
         if site['appointments']:
-            available_appointments[site['provider_name']] = {'available_apts': len(site['appointments']), 'website': site['url'], 'address': site['address']}
+            if site['provider_name'] not in available_appointments:
+                available_appointments[site['provider_name']] = {'available_apts': len(site['appointments']), 'website': site['url']}
+            else:
+                available_appointments[site['provider_name']]['available_apts'] += len(site['appointments'])
     return available_appointments
 #just going to have the loop end when it finds something. Not sure how to keep it from spamming my phone if the API goes wild overnight or something
 x = 0
@@ -75,6 +80,8 @@ while True:
     if (curr_seconds % 60 == 0):
         available_appointments = pull_API()
         if available_appointments and (not old_available_appointments == available_appointments):
+            print(old_available_appointments)
+            print(available_appointments)
             message = client.messages.create(
                 to=my_number, 
                 from_=twilio_number,
