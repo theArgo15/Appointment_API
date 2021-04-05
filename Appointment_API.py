@@ -9,7 +9,7 @@ from geopy.distance import geodesic
 
 
 load_dotenv()
-#info for text message service twilio
+# info for text message service twilio
 account_sid = os.getenv('ACCOUNT_SID')
 auth_token = os.getenv('AUTH_TOKEN')
 twilio_number = os.getenv('TWILIO_NUMBER')
@@ -17,27 +17,30 @@ my_number = os.getenv('MY_NUMBER')
 maxs_number = os.getenv('MAXS_NUMBER')
 client = Client(account_sid, auth_token)
 
-#info for distance
-geocoder=Nominatim(user_agent='Appointment_API')
+# info for distance
+geocoder = Nominatim(user_agent='Appointment_API')
 
 # vax_site_coords should be in a tuple with signed (latitude, longitude)
+
+
 def calculate_site_distance_from_user(vax_site_coords):
-    home = (37.4309 , -121.9530)
-    distance = geodesic(home,vax_site_coords).miles
+    home = (37.4309, -121.9530)
+    distance = geodesic(home, vax_site_coords).miles
     return distance
 
 # json data is swapped, so run it through this before using calculate_site_distance_from_user function
+
+
 def coordinate_swap(backwards_coordinates):
-    forwards_coordinates=(backwards_coordinates[1], backwards_coordinates [0])
+    forwards_coordinates = (backwards_coordinates[1], backwards_coordinates[0])
     return forwards_coordinates
 
-    
 
-#download and parse data from API
+# download and parse data from API
 def pull_API():
     # current_time = datetime.now().isoformat()[10:19]
     # print(f'Pulling API {current_time}')
-    req=requests.get('https://www.vaccinespotter.org/api/v0/states/CA.json')
+    req = requests.get('https://www.vaccinespotter.org/api/v0/states/CA.json')
     json_data = req.json()['features']
     cleaned_data = []
     acceptable_distance_from_user = 25
@@ -47,7 +50,8 @@ def pull_API():
         if site_properties['postal_code'] is None:
             continue
         cleaned_city = site_properties['city'].lower()
-        vax_site_distance = calculate_site_distance_from_user(coordinate_swap(site_geometry['coordinates']))
+        vax_site_distance = calculate_site_distance_from_user(
+            coordinate_swap(site_geometry['coordinates']))
         if vax_site_distance:
             if vax_site_distance <= acceptable_distance_from_user:
                 cleaned_data.append(
@@ -63,17 +67,20 @@ def pull_API():
                         'appointments': site_properties['appointments']
                     }
                 )
-    #now look for which sites have availabilty
-    available_appointments = {} 
+    # now look for which sites have availabilty
+    available_appointments = {}
     for site in cleaned_data:
         if site['appointments']:
             if site['provider_name'] not in available_appointments:
-                available_appointments[site['provider_name']] = {'available_apts': len(site['appointments']), 'website': site['url']}
+                available_appointments[site['provider_name']] = {
+                    'available_apts': len(site['appointments']), 'website': site['url']}
             else:
-                available_appointments[site['provider_name']]['available_apts'] += len(site['appointments'])
+                available_appointments[site['provider_name']
+                                       ]['available_apts'] += len(site['appointments'])
     return available_appointments
-#just going to have the loop end when it finds something. Not sure how to keep it from spamming my phone if the API goes wild overnight or something
-x = 0
+
+
+# infinite loop with a 10 min cooldown. Hopefully doesn't end up spamming my phone
 old_available_appointments = pull_API()
 while True:
     dt = datetime.now()
@@ -84,9 +91,9 @@ while True:
             print(old_available_appointments)
             print(available_appointments)
             message = client.messages.create(
-                to=maxs_number, 
+                to=maxs_number,
                 from_=twilio_number,
-                body= "Get that appointment! https://www.vaccinespotter.org/CA/?zip=95134&radius=25")
+                body="Get that appointment! https://www.vaccinespotter.org/CA/?zip=95134&radius=25")
             time.sleep(600)
             old_available_appointments = available_appointments
         time.sleep(1)
