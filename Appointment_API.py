@@ -14,6 +14,7 @@ account_sid = os.getenv('ACCOUNT_SID')
 auth_token = os.getenv('AUTH_TOKEN')
 twilio_number = os.getenv('TWILIO_NUMBER')
 my_number = os.getenv('MY_NUMBER')
+maxs_number = os.getenv('MAXS_NUMBER')
 client = Client(account_sid, auth_token)
 
 #info for distance
@@ -21,7 +22,7 @@ geocoder=Nominatim(user_agent='Appointment_API')
 
 # vax_site_coords should be in a tuple with signed (latitude, longitude)
 def calculate_site_distance_from_user(vax_site_coords):
-    home = (44.9956 , -93.2581)
+    home = (37.4309 , -121.9530)
     distance = geodesic(home,vax_site_coords).miles
     return distance
 
@@ -36,7 +37,7 @@ def coordinate_swap(backwards_coordinates):
 def pull_API():
     # current_time = datetime.now().isoformat()[10:19]
     # print(f'Pulling API {current_time}')
-    req=requests.get('https://www.vaccinespotter.org/api/v0/states/MN.json')
+    req=requests.get('https://www.vaccinespotter.org/api/v0/states/CA.json')
     json_data = req.json()['features']
     cleaned_data = []
     acceptable_distance_from_user = 25
@@ -54,7 +55,7 @@ def pull_API():
                         'provider_name': site_properties['provider_brand_name'].lower(),
                         'site_name': site_properties['name'].lower(),
                         'address': f'{site_properties["address"].lower()}, '
-                                   f'{cleaned_city}, MN,'
+                                   f'{cleaned_city}, CA,'
                                    f' {site_properties["postal_code"]}',
                         'site_distance': vax_site_distance,
                         'provider_location_id': site_properties['provider_location_id'],
@@ -83,9 +84,9 @@ while True:
             print(old_available_appointments)
             print(available_appointments)
             message = client.messages.create(
-                to=my_number, 
+                to=maxs_number, 
                 from_=twilio_number,
-                body= "Get that appointment! https://www.vaccinespotter.org/MN/?zip=55413&radius=25")
+                body= "Get that appointment! https://www.vaccinespotter.org/CA/?zip=95134&radius=25")
             time.sleep(600)
             old_available_appointments = available_appointments
         time.sleep(1)
